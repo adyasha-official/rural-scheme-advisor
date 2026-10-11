@@ -16,7 +16,7 @@ SOURCES_FILE = DATA_DIR / "sources.json"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "gemini-embedding-001")
 EMBED_DIM = int(os.getenv("EMBED_DIM", "768"))
-GEN_MODEL = os.getenv("GEN_MODEL", "gemini-2.5-flash")
+GEN_MODEL = os.getenv("GEN_MODEL", "gemini-3.8-flash")
 
 # Chunking (words, a simple proxy for tokens)
 CHUNK_WORDS = int(os.getenv("CHUNK_WORDS", "260"))
