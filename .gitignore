@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.pytest_cache/
+node_modules/
+dist/
+frontend/.env.local
+
+# Downloaded government PDFs: check redistribution terms before committing them.
+backend/data/raw/

@@ -1,0 +1,6 @@
+question,scheme_id,expected_keyword,answerable
+Who is eligible for PM-KISAN?,pm_kisan,eligib,yes
+How many days of work can I get under MGNREGA?,mgnrega,100 days,yes
+What documents are needed to apply for PMAY-G?,pmay_g,document,yes
+What is the capital of France?,,,no
+Who won the cricket world cup?,,,no

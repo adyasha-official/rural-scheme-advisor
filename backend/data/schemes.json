@@ -1,0 +1,54 @@
+{
+  "schemes": [
+    {
+      "id": "pm_kisan",
+      "name": "PM-KISAN",
+      "full_name": "Pradhan Mantri Kisan Samman Nidhi",
+      "category": "Agriculture",
+      "summary": "Income support scheme for farmer families.",
+      "aliases": ["pm kisan", "pmkisan", "pm-kisan", "kisan samman", "kisan samman nidhi", "पीएम किसान", "किसान सम्मान", "ପିଏମ କିଷାନ"],
+      "tags": ["farming", "income_support", "agriculture"],
+      "official_url": "https://pmkisan.gov.in/"
+    },
+    {
+      "id": "pmay_g",
+      "name": "PMAY-G",
+      "full_name": "Pradhan Mantri Awaas Yojana - Gramin",
+      "category": "Housing",
+      "summary": "Rural housing assistance scheme.",
+      "aliases": ["pmay", "pmay-g", "pmayg", "pmay gramin", "awaas", "awas", "pradhan mantri awas", "आवास योजना", "प्रधानमंत्री आवास", "ଆବାସ"],
+      "tags": ["housing", "rural_housing"],
+      "official_url": "https://pmayg.nic.in/"
+    },
+    {
+      "id": "ayushman_bharat",
+      "name": "Ayushman Bharat PM-JAY",
+      "full_name": "Ayushman Bharat Pradhan Mantri Jan Arogya Yojana",
+      "category": "Healthcare",
+      "summary": "Health coverage scheme for eligible families.",
+      "aliases": ["ayushman", "ayushman bharat", "pmjay", "pm-jay", "pm jay", "jan arogya", "आयुष्मान", "ଆୟୁଷ୍ମାନ"],
+      "tags": ["health", "hospital", "insurance"],
+      "official_url": "https://pmjay.gov.in/"
+    },
+    {
+      "id": "ujjwala",
+      "name": "PM Ujjwala Yojana",
+      "full_name": "Pradhan Mantri Ujjwala Yojana",
+      "category": "Energy",
+      "summary": "LPG connection scheme for eligible households.",
+      "aliases": ["ujjwala", "pmuy", "pm ujjwala", "ujjwala yojana", "lpg connection", "उज्ज्वला", "ଉଜ୍ଜ୍ୱଳା"],
+      "tags": ["cooking_fuel", "lpg", "women"],
+      "official_url": "https://www.pmuy.gov.in/"
+    },
+    {
+      "id": "mgnrega",
+      "name": "MGNREGA",
+      "full_name": "Mahatma Gandhi National Rural Employment Guarantee Act",
+      "category": "Employment",
+      "summary": "Rural employment scheme providing wage work.",
+      "aliases": ["mgnrega", "nrega", "mnrega", "job card", "100 days work", "रोजगार गारंटी", "मनरेगा", "ମନରେଗା"],
+      "tags": ["employment", "wage_work", "job_card"],
+      "official_url": "https://nrega.nic.in/"
+    }
+  ]
+}

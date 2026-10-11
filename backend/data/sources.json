@@ -1,0 +1,4 @@
+{
+  "_comment": "Optional. Map 'scheme_id/filename.pdf' to the official URL you downloaded it from. Fill these in so citations link to the real source.",
+  "pm_kisan/guidelines.pdf": {"url": "", "retrieved": "", "document_date": ""}
+}
