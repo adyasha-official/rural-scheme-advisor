@@ -54,11 +54,56 @@ function SourceCard({ s }) {
   );
 }
 
+// Minimal, safe formatter: **bold**, *italic*, "- " bullets, and [n] citation badges.
+// Builds React elements only (no HTML injection).
+function renderInline(text) {
+  return text.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*|\[\d{1,2}\])/g).map((part, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={i}>{renderInline(part.slice(2, -2))}</strong>;
+    if (/^\*[^*]+\*$/.test(part)) return <em key={i}>{renderInline(part.slice(1, -1))}</em>;
+    if (/^\[\d{1,2}\]$/.test(part)) return <sup key={i} className="cite">{part.slice(1, -1)}</sup>;
+    return part;
+  });
+}
+
+function FormattedText({ text }) {
+  const blocks = [];
+  let list = null;
+  text.split("\n").forEach((line, i) => {
+    const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
+    if (bullet) {
+      if (!list) {
+        list = [];
+        blocks.push({ type: "ul", items: list, key: i });
+      }
+      list.push(bullet[1]);
+    } else {
+      list = null;
+      if (line.trim()) blocks.push({ type: "p", text: line, key: i });
+    }
+  });
+  return (
+    <>
+      {blocks.map((b) =>
+        b.type === "ul" ? (
+          <ul key={b.key}>
+            {b.items.map((it, j) => (
+              <li key={j}>{renderInline(it)}</li>
+            ))}
+          </ul>
+        ) : (
+          <p key={b.key}>{renderInline(b.text)}</p>
+        )
+      )}
+    </>
+  );
+}
+
 function MessageBubble({ m, onAsk }) {
+  const rich = m.role === "assistant" && m.status === "answered";
   return (
     <div className={`msg ${m.role}`}>
-      <div className={`bubble ${m.status === "not_found" || m.status === "error" ? "warn" : ""}`}>
-        {m.text}
+      <div className={`bubble ${rich ? "rich" : ""} ${m.status === "not_found" || m.status === "error" ? "warn" : ""}`}>
+        {rich ? <FormattedText text={m.text} /> : m.text}
       </div>
       {m.sources?.length > 0 && (
         <div className="sources">
@@ -120,9 +165,9 @@ function SchemeCard({ s, onAsk }) {
 
 function ChatWindow({ messages, loading, onAsk }) {
   const end = useRef(null);
-     useEffect(() => {
-     end.current?.scrollIntoView({ behavior: "smooth" });
-   }, [messages, loading]);
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
   return (
     <div className="chat">
       {messages.length === 0 && (

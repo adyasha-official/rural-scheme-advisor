@@ -1,6 +1,51 @@
-question,scheme_id,expected_keyword,answerable
-Who is eligible for PM-KISAN?,pm_kisan,eligib,yes
-How many days of work can I get under MGNREGA?,mgnrega,100 days,yes
-What documents are needed to apply for PMAY-G?,pmay_g,document,yes
-What is the capital of France?,,,no
-Who won the cricket world cup?,,,no
+question,scheme_id,expected_keyword,answerable,type
+Who is eligible for PM-KISAN?,pm_kisan,eligib,yes,direct
+How much money do farmers get under PM-KISAN every year?,pm_kisan,"6000|6,000|6 000",yes,direct
+How many installments are paid in a year under PM-KISAN?,pm_kisan,installment|instalment,yes,direct
+Which farmers are excluded from PM-KISAN benefits?,pm_kisan,exclu,yes,direct
+Is Aadhaar required to get PM-KISAN money?,pm_kisan,aadhaar|aadhar,yes,direct
+How is the PM-KISAN money sent to farmers?,pm_kisan,direct benefit transfer|DBT,yes,paraphrase
+How do I register as a PM-KISAN beneficiary?,pm_kisan,registration|register,yes,direct
+How are PM-KISAN beneficiaries identified?,pm_kisan,identif,yes,paraphrase
+Who is eligible for a house under PMAY-G?,pmay_g,eligib,yes,direct
+How much money is given to build a house under PMAY-G?,pmay_g,"1.20|1,20|120000|120,000",yes,direct
+What is the minimum size of the house under PMAY-G?,pmay_g,25 sq|square,yes,direct
+How are beneficiaries selected for PMAY-G houses?,pmay_g,SECC,yes,direct
+Is extra help given for a toilet when building a PMAY-G house?,pmay_g,toilet,yes,direct
+How many days of MGNREGA work are given for building a PMAY-G house?,pmay_g,person-days|person days,yes,direct
+What is AwaasSoft?,pmay_g,awaassoft|awaas soft,yes,direct
+What is the role of the Gram Sabha in PMAY-G?,pmay_g,gram sabha,yes,direct
+What papers do I need for PMAY-G?,pmay_g,document,yes,paraphrase
+How many days of work can I get under MGNREGA?,mgnrega,100 days,yes,direct
+Who can get a job card under MGNREGA?,mgnrega,job card,yes,direct
+How do I apply for a job card?,mgnrega,job card,yes,direct
+How are MGNREGA wages paid?,mgnrega,wage,yes,direct
+Within how many days must work be given after I apply under MGNREGA?,mgnrega,15 days|fifteen days,yes,direct
+Do I get an allowance if no work is given under MGNREGA?,mgnrega,unemployment allowance,yes,paraphrase
+What facilities must be available at an MGNREGA worksite?,mgnrega,drinking water|crèche|creche|shade,yes,direct
+What is a social audit under MGNREGA?,mgnrega,social audit,yes,direct
+Where can I complain about problems in MGNREGA work?,mgnrega,grievance,yes,paraphrase
+What is Ayushman Bharat PM-JAY?,ayushman_bharat,jan arogya,yes,direct
+How much health insurance cover does a family get under PM-JAY?,ayushman_bharat,lakh,yes,direct
+How are hospital claims processed under PM-JAY?,ayushman_bharat,claim,yes,direct
+How does PM-JAY control fraud and abuse?,ayushman_bharat,fraud,yes,direct
+Who are the beneficiaries of PM-JAY?,ayushman_bharat,beneficiar,yes,direct
+What technology is used to run PM-JAY?,ayushman_bharat,technolog,yes,paraphrase
+How are hospitals added to PM-JAY?,ayushman_bharat,empanel,yes,direct
+Who is eligible for the PM Ujjwala Yojana?,ujjwala,adult woman|18 years,yes,direct
+What documents are needed for a new Ujjwala LPG connection?,ujjwala,aadhaar,yes,direct
+How do I apply for an Ujjwala gas connection?,ujjwala,distributor,yes,direct
+When was the Ujjwala scheme launched?,ujjwala,2016,yes,direct
+What is Ujjwala 2.0?,ujjwala,ujjwala 2.0,yes,direct
+मनरेगा में साल में कितने दिन काम मिलता है?,mgnrega,100 days,yes,multilingual_hi
+पीएम किसान के लिए कौन पात्र है?,pm_kisan,eligib,yes,multilingual_hi
+प्रधानमंत्री आवास योजना ग्रामीण के लिए पात्रता क्या है?,pmay_g,eligib,yes,multilingual_hi
+उज्ज्वला योजना के लिए कौन आवेदन कर सकता है?,ujjwala,adult woman|18 years,yes,multilingual_hi
+ପିଏମ କିଷାନ ଯୋଜନାରେ ବର୍ଷକୁ କେତେ ଟଙ୍କା ମିଳେ?,pm_kisan,"6000|6,000|6 000",yes,multilingual_or
+What is the capital of France?,,,no,out_of_scope
+Who won the cricket world cup?,,,no,out_of_scope
+How do I bake a chocolate cake?,,,no,out_of_scope
+What is the price of bitcoin today?,,,no,out_of_scope
+Will it rain in Delhi tomorrow?,,,no,out_of_scope
+Who is the Prime Minister of Japan?,,,no,out_of_scope
+How do I file my income tax return?,,,no,out_of_scope

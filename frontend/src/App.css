@@ -19,6 +19,12 @@ select, input[type=text], input:not([type]) { padding: 10px 12px; border: 1px so
 .bubble { padding: 10px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; }
 .msg.user .bubble { background: var(--green); color: #fff; border-color: var(--green); }
 .bubble.warn { background: var(--warn); }
+.bubble.rich { white-space: normal; }
+.bubble.rich p { margin: 0 0 .6em; }
+.bubble.rich p:last-child, .bubble.rich ul:last-child { margin-bottom: 0; }
+.bubble.rich ul { margin: 0 0 .6em; padding-left: 1.2em; }
+.bubble.rich li { margin-bottom: .25em; }
+.cite { background: #e3efe6; color: var(--green-d); border-radius: 4px; padding: 0 4px; margin: 0 1px; font-size: .7rem; font-weight: 600; }
 .sources { display: flex; flex-direction: column; gap: 6px; }
 .source { display: flex; gap: 10px; background: #eef4ee; border-radius: 10px; padding: 8px 10px; font-size: .9rem; }
 .badge { background: var(--green); color: #fff; border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; font-size: .75rem; flex: none; }
