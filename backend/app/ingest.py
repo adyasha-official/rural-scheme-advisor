@@ -1,4 +1,4 @@
-"""Offline ingestion: PDFs -> cleaned, section-aware chunks -> embeddings -> index files.
+﻿"""Offline ingestion: PDFs -> cleaned, section-aware chunks -> embeddings -> index files.
 
 Usage (from backend/):  python -m app.ingest
 Expects PDFs in data/raw/<scheme_id>/<file>.pdf
@@ -97,8 +97,11 @@ def build_chunks() -> list[dict]:
         if not scheme:
             print(f"! Skipping {scheme_dir.name}: not in schemes.json")
             continue
-        for pdf in sorted(scheme_dir.glob("*.pdf")):
-            pages = clean_pages(extract_pages(pdf))
+        for pdf in sorted(list(scheme_dir.glob("*.pdf")) + list(scheme_dir.glob("*.txt"))):
+            if pdf.suffix.lower() == ".txt":
+                pages = [(1, pdf.read_text(encoding="utf-8", errors="replace"))]
+            else:
+                pages = clean_pages(extract_pages(pdf))
             empty = [n for n, t in pages if not t.strip()]
             if len(empty) == len(pages):
                 print(f"! {pdf.name}: no extractable text (scanned PDF? OCR needed). Skipped.")
@@ -137,6 +140,27 @@ def save_index(chunks: list[dict], vectors: np.ndarray) -> None:
     )
 
 
+def embed_with_cache(chunks: list[dict]) -> np.ndarray:
+    """Reuse vectors from the saved index for unchanged chunks; embed only new or changed ones."""
+    cache = {}
+    old_meta = config.INDEX_DIR / "chunks.json"
+    old_vecs = config.INDEX_DIR / "embeddings.npy"
+    if old_meta.exists() and old_vecs.exists():
+        old_chunks = json.loads(old_meta.read_text(encoding="utf-8"))
+        old_v = np.load(old_vecs)
+        cache = {(c["id"], c["text"]): old_v[i] for i, c in enumerate(old_chunks)}
+    todo = [i for i, c in enumerate(chunks) if (c["id"], c["text"]) not in cache]
+    print(f"Reusing {len(chunks) - len(todo)} saved embeddings; embedding {len(todo)} new chunks.")
+    new_vecs = llm.embed([chunks[i]["text"] for i in todo], task="RETRIEVAL_DOCUMENT") if todo else []
+    todo_set, j, out = set(todo), 0, []
+    for i, c in enumerate(chunks):
+        if i in todo_set:
+            out.append(new_vecs[j])
+            j += 1
+        else:
+            out.append(cache[(c["id"], c["text"])])
+    return np.array(out, dtype="float32")
+
 def main() -> None:
     print("Reading PDFs from", config.RAW_DIR)
     chunks = build_chunks()
@@ -144,7 +168,7 @@ def main() -> None:
         print("No chunks produced. Put PDFs in data/raw/<scheme_id>/ first.")
         return
     print(f"Embedding {len(chunks)} chunks (this calls the Gemini API)...")
-    vectors = llm.embed([c["text"] for c in chunks], task="RETRIEVAL_DOCUMENT")
+    vectors = embed_with_cache(chunks)
     save_index(chunks, vectors)
     print(f"Done. Saved index to {config.INDEX_DIR} - commit it so deployment needs no ingestion.")
 
