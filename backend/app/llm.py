@@ -22,7 +22,8 @@ def _get_client():
 
 def embed(texts: list[str], task: str = "RETRIEVAL_DOCUMENT") -> np.ndarray:
     """Return L2-normalised embeddings, shape (len(texts), EMBED_DIM).
-    task: RETRIEVAL_DOCUMENT for chunks, RETRIEVAL_QUERY for questions."""
+    task: RETRIEVAL_DOCUMENT for chunks, RETRIEVAL_QUERY for questions.
+    Paced to stay under the free tier limit (100 texts per minute)."""
     from google.genai import types
 
     client = _get_client()
@@ -30,7 +31,7 @@ def embed(texts: list[str], task: str = "RETRIEVAL_DOCUMENT") -> np.ndarray:
     batch_size = 20
     for i in range(0, len(texts), batch_size):
         batch = texts[i : i + batch_size]
-        for attempt in range(5):
+        for attempt in range(8):
             try:
                 res = client.models.embed_content(
                     model=config.EMBED_MODEL,
@@ -41,12 +42,16 @@ def embed(texts: list[str], task: str = "RETRIEVAL_DOCUMENT") -> np.ndarray:
                 )
                 vectors.extend(e.values for e in res.embeddings)
                 break
-            except Exception:
-                if attempt == 4:
+            except Exception as e:
+                if attempt == 7:
                     raise
-                time.sleep(2 ** (attempt + 1))  # back off for free-tier rate limits
+                limited = "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)
+                wait = 62 if limited else 2 ** (attempt + 1)
+                print(f"  waiting {wait}s (API limit or busy)...")
+                time.sleep(wait)
         if len(texts) > batch_size:
-            time.sleep(1)
+            print(f"  embedded {min(i + batch_size, len(texts))}/{len(texts)}")
+            time.sleep(14)  # ~85 texts per minute
     arr = np.array(vectors, dtype="float32")
     norms = np.linalg.norm(arr, axis=1, keepdims=True)
     return arr / np.clip(norms, 1e-9, None)
