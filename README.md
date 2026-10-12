@@ -5,29 +5,92 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react&logoColor=black)
 ![Gemini](https://img.shields.io/badge/Gemini-API-4285F4?logo=googlegemini&logoColor=white)
-![Languages](https://img.shields.io/badge/Languages-English_%7C_हिन्दी_%7C_ଓଡ଼ିଆ-orange)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 
-**Ask questions about Indian government welfare schemes in English, Hindi or Odia and get answers taken from official documents, with page-level citations. When the documents don't support an answer, the assistant says so instead of guessing.**
+**A multilingual (English · हिन्दी · ଓଡ଼ିଆ) question-answering assistant for Indian government welfare schemes. Every answer is grounded in official documents and cites the exact page. When the documents don't support an answer, it says so instead of guessing.**
 
-👉 **[Try the live app](https://rural-scheme-advisor-alpha.vercel.app)** (the backend sleeps on Render's free tier, so the first question after a quiet period can take 30–60 seconds).
+👉 **[Try the live app](https://rural-scheme-advisor-alpha.vercel.app)** · the backend sleeps on Render's free tier, so the first question after a quiet period can take 30–60 seconds.
 
-**Schemes covered:** PM-KISAN · PMAY-G · Ayushman Bharat PM-JAY · PM Ujjwala Yojana · MGNREGA
+**Jump to:** [Why](#-why-this-project) · [How it works](#-how-it-works) · [Screenshots](#-screenshots) · [Evaluation](#-evaluation) · [Limitations](#-known-limitations) · [Future improvements](#-future-improvements) · [Run it](#-run-it-yourself)
 
-**Jump to:** [Screenshots](#-screenshots) · [How it works](#-how-it-works) · [Design choices](#-design-choices) · [Run locally](#-run-locally) · [Evaluation](#-evaluation) · [Deploy](#-deploy) · [API](#-api)
+---
+
+## 🎯 Why this project
+
+Information about schemes like PM-KISAN, PMAY-G, Ayushman Bharat, Ujjwala and MGNREGA is spread across long PDFs written in official language, mostly in English. The people who need these schemes most often can't read them easily.
+
+A general chatbot is risky here: a confident wrong answer about eligibility or benefits can cost someone real money or a missed deadline. So the goals were:
+
+- **Make official documents answerable** in plain language, in English, Hindi and Odia.
+- **Never make things up.** Every answer must point to the page it came from, and unsupported questions must be refused.
+- **Prove it works.** Measure retrieval quality instead of just demoing a few good examples.
+- **Keep it free to run and deploy**, since the intended users are not paying for infrastructure.
+
+Scope: **5 schemes, 7 official documents, about 490 indexed passages.**
+
+---
+
+## 🧠 How it works
+
+Two pipelines: an offline one that prepares the knowledge base, and an online one that answers each question.
+
+```mermaid
+flowchart LR
+    subgraph Offline["Offline: ingestion"]
+        A["Official PDFs / text"] --> B["Extract + clean (PyMuPDF)"]
+        B --> C["Section-aware chunks + page metadata"]
+        C --> D["Gemini embeddings"]
+        D --> E[("chunks.json + embeddings.npy")]
+    end
+    subgraph Online["Online: each question"]
+        U["React UI"] --> V["FastAPI: validate"]
+        V --> W["Detect language + scheme"]
+        W --> X["Embed + cosine search"]
+        X --> Z{"Score ≥ MIN_SCORE?"}
+        Z -- "No" --> N["Refuse: not in documents"]
+        Z -- "Yes" --> G["Grounded Gemini prompt"]
+        G --> K["Validate citations"]
+        K --> R["Answer + sources"]
+    end
+    E -.-> X
+```
+
+### Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | React + Vite, hosted on Vercel |
+| Backend | FastAPI + Pydantic, Docker, hosted on Render |
+| Ingestion | PyMuPDF, custom header/footer cleaning, section-aware chunking |
+| Retrieval | Gemini multilingual embeddings, NumPy cosine search |
+| Generation | Gemini API with backend-validated citations |
+| Tests | pytest (retrieval, chunking, citation validation, API) |
+
+### Engineering decisions
+
+| Decision | Why it matters |
+| --- | --- |
+| **Citations are built by the backend, not the LLM** | The model only writes `[n]` markers. The server validates each one against the retrieved passages, drops invalid ones, and refuses an answer with no valid citation. A source can never be invented. |
+| **Relevance threshold tuned from data** | If no passage scores above `MIN_SCORE`, the LLM is never called. The threshold (0.6) was chosen from a sweep over the evaluation set, not guessed. This is the first line of defence against hallucination, and it also saves cost. |
+| **Measured, not assumed** | A 50-question evaluation set reports Recall@5 of 0.98 and MRR of 0.88, and shows exactly where retrieval is weaker (paraphrased questions). |
+| **Cross-lingual retrieval** | Hindi and Odia questions retrieve English passages through multilingual embeddings, and the answer is written in the user's language. |
+| **Prompt-injection hygiene** | Retrieved text is marked as untrusted data in the system prompt; user input is validated and rate-limited. |
+| **Deploys with no database** | The vector index is a committed NumPy file with cosine search. It is fast at this scale and needs no persistent disk, so it runs free on Render and Vercel. |
+| **Resilient to a free-tier API** | Ingestion paces embedding calls and caches vectors, so adding a document only embeds new chunks. The chat path retries on 429/503 errors. |
 
 ---
 
 ## 📸 Screenshots
 
-| Cited answer | Refuses when it can't find support |
+| Cited answer | Refuses when it has no support |
 | :---: | :---: |
 | ![Cited answer](docs/screenshots/chat-answer.png) | ![Refusal](docs/screenshots/chat-refusal.png) |
-| Answers carry numbered citations that link to the page they came from. | Questions outside the documents get a clear "not found" instead of a made-up answer. |
+| Numbered citations link to the document, page and section. | Out-of-scope questions get a clear "not found" instead of a made-up answer. |
 
-| Browse by category | Find schemes for you |
+| Browse schemes | Find schemes for you |
 | :---: | :---: |
 | ![Explore schemes](docs/screenshots/explore.png) | ![Recommendations](docs/screenshots/recommend.png) |
-| Explore the five schemes, filter by category and ask about any of them. | Pick your needs and see suggested schemes with the reason for each. These are suggestions, not an eligibility decision. |
+| Filter the five schemes by category and ask about any of them. | Pick needs and see suggested schemes with the reason. These are suggestions, not an eligibility decision. |
 
 <details>
 <summary><b>💬 Try these questions</b></summary>
@@ -38,64 +101,75 @@
 - *मनरेगा में साल में कितने दिन काम मिलता है?* (Hindi)
 - *What is the capital of France?* (out of scope, so it should refuse)
 
-Change the language selector at the top right to get the answer in Hindi or Odia, or leave it on **Auto-detect**.
-
 </details>
 
 ---
 
-## 🧭 How it works
+## 📊 Evaluation
 
-Two pipelines: an offline one that prepares the knowledge base, and an online one that answers each question.
+`evaluation/dataset.csv` contains 43 answerable questions (direct, paraphrased, Hindi, Odia) and 7 out-of-scope questions. A retrieved passage counts as relevant if it comes from the right scheme and contains an expected keyword. So these numbers measure retrieval under a **keyword-based proxy for relevance**, not human-judged answer quality.
 
-```mermaid
-flowchart TD
-    subgraph Offline["Offline: python -m app.ingest"]
-        A["Official PDFs and text pages"] --> B["Extract text per page (PyMuPDF)"]
-        B --> C["Clean headers and footers"]
-        C --> D["Section-aware chunks + metadata"]
-        D --> E["Gemini embeddings"]
-        E --> F[("Index files: chunks.json + embeddings.npy")]
-    end
-```
-
-```mermaid
-flowchart TD
-    U["User question (React)"] --> V["FastAPI: validate input"]
-    V --> W["Detect language, scheme, intent"]
-    W --> X["Embed question"]
-    X --> Y["Cosine search, filtered to the scheme when explicit"]
-    Y --> Z{"Best score above MIN_SCORE?"}
-    Z -- "No" --> N["Return: not found in documents"]
-    Z -- "Yes" --> G["Grounded Gemini prompt with numbered excerpts"]
-    G --> K["Validate citations against retrieved chunks"]
-    K --> R["Answer + sources built from stored metadata"]
-```
-
----
-
-## 🛡️ Design choices
-
-- **Citations come from the backend, not the LLM.** The model only writes `[n]` markers. Invalid markers are stripped, and an answer with no valid citation is refused.
-- **Abstention.** If no chunk reaches `MIN_SCORE`, the LLM is never called.
-- **Prompt-injection hygiene.** Retrieved excerpts are marked as untrusted data in the system prompt.
-- **Index is a committed file** (NumPy cosine search) instead of a hosted vector database, so deployment needs no persistent disk. At this scale (thousands of chunks) that is fast and simple. A vector database would be the next step as the corpus grows.
-- **Hosted embeddings** (Gemini) keep the backend small enough for a free Render instance. Hindi and Odia questions can retrieve English passages because the embedding model is multilingual.
-- **Recommendations** are transparent rule matching on scheme tags, and explicitly *not* an eligibility decision.
-- **Honest limits:** Romanised Hindi ("kaun eligible hai") is detected as English; sessions are in memory (single instance); there is no OCR for scanned PDFs; answers reflect the indexed documents, which may not be the latest rules.
-
-| Layer | Technology |
+| Metric (K = 5) | Result |
 | --- | --- |
-| Frontend | React + Vite, hosted on Vercel |
-| Backend | FastAPI + Pydantic, Docker, hosted on Render |
-| Ingestion | PyMuPDF, custom cleaning and section-aware chunking |
-| Retrieval | Gemini multilingual embeddings, NumPy cosine search |
-| Generation | Gemini API with backend-validated citations |
-| Tests | pytest (retrieval, chunking, citations, API) |
+| **Recall@5** | **0.977** (42 of 43 answerable questions) |
+| **MRR** | **0.876** |
+
+| Question type | n | Recall@5 | MRR |
+| --- | ---: | ---: | ---: |
+| Direct | 32 | 1.000 | 0.932 |
+| Paraphrased | 6 | 0.833 | 0.556 |
+| Hindi | 4 | 1.000 | 0.875 |
+| Odia | 1 | 1.000 | 1.000 |
+
+**Choosing the refusal threshold.** The highest top-1 similarity among out-of-scope questions was 0.557, and the lowest among answerable ones was 0.673. Sweeping `MIN_SCORE` shows a clean gap:
+
+| MIN_SCORE | Answerable kept | Out-of-scope refused |
+| ---: | ---: | ---: |
+| 0.50 | 100% | 14% |
+| 0.55 | 100% | 86% |
+| **0.60 (chosen)** | **100%** | **100%** |
+| 0.65 | 100% | 100% |
+| 0.70 | 95% | 100% |
+
+**What this tells me**
+- Direct questions are retrieved reliably. **Paraphrased questions are the weak spot** (the right passage is found, but ranked lower), which points to hybrid retrieval and a re-ranker as the next step.
+- The threshold was tuned on the same 50 questions, so the clean separation is optimistic. Real users will phrase things differently. The Hindi and Odia samples are small (4 and 1), so those numbers show it works, not how well.
+
+```bash
+python evaluation/evaluate.py --check   # offline: is the expected evidence in the index?
+python evaluation/evaluate.py           # Recall@K, MRR, per-type results, MIN_SCORE sweep
+```
 
 ---
 
-## 🚀 Run locally
+## ⚠️ Known limitations
+
+- Retrieval of paraphrased questions is weaker than direct ones (see evaluation).
+- Romanised Hindi ("kaun eligible hai") is detected as English.
+- Sessions are kept in memory, so the backend runs as a single instance.
+- No OCR: scanned PDFs are not supported.
+- Answers reflect the indexed documents, which may not be the latest rules.
+- The Ayushman Bharat source is a process document, so eligibility questions for it are weaker than for other schemes.
+- Evaluation uses a keyword proxy for relevance and has not been checked by human reviewers.
+
+## 🔮 Future improvements
+
+- [ ] Hybrid retrieval (keyword + embeddings) and a re-ranker to improve paraphrased questions.
+- [ ] Human-judged evaluation of answer faithfulness and citation accuracy, beyond the keyword proxy.
+- [ ] Add more schemes and better source documents (e.g. the full PM-JAY operations manual).
+- [ ] Move to a vector database and persistent sessions as the corpus and traffic grow.
+- [ ] Voice input and spoken answers for low-literacy users.
+- [ ] OCR support for scanned documents.
+- [ ] Better Romanised Hindi / Hinglish handling.
+- [ ] Scheduled re-ingestion so answers track updated guidelines.
+- [ ] Support more Indian languages.
+
+---
+
+## 🚀 Run it yourself
+
+<details>
+<summary><b>Local setup</b></summary>
 
 Prerequisites: Python 3.11+, Node 18+, a free Gemini API key from https://aistudio.google.com/apikey
 
@@ -104,9 +178,9 @@ Prerequisites: Python 3.11+, Node 18+, a free Gemini API key from https://aistud
 cd backend
 python -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env                                      # then put your GEMINI_API_KEY in it
+cp .env.example .env                                      # put your GEMINI_API_KEY in it
 
-# 2. Add official documents (see below), then build the index
+# 2. Build the index (documents go in backend/data/raw/<scheme_id>/)
 python -m app.ingest
 
 # 3. Start the API
@@ -119,75 +193,35 @@ npm install
 npm run dev                                               # http://localhost:5173
 ```
 
-Run the tests (no API key needed): `cd backend && pytest`
+Tests (no API key needed): `cd backend && pytest`
+
+</details>
 
 <details>
-<summary><b>📄 Adding documents</b></summary>
+<summary><b>Adding documents</b></summary>
 
-1. Download official documents (guidelines, FAQs, operational guidelines) from each scheme's government portal.
-2. Place them as `backend/data/raw/<scheme_id>/<file>.pdf` using ids: `pm_kisan`, `pmay_g`, `ayushman_bharat`, `ujjwala`, `mgnrega`.
-3. Optionally record each file's official URL in `backend/data/sources.json` (`"pm_kisan/guidelines.pdf": {"url": "https://..."}`) so citations link to the exact source. Otherwise the scheme's portal link is used.
-4. Run `python -m app.ingest`, then commit `backend/data/index/`.
-
-Plain-text sources also work: put a UTF-8 `.txt` file in the scheme's folder. This is useful for web pages that can't be saved as a text-based PDF. A `.txt` file counts as page 1 in citations.
-
-`python -m app.ingest` reuses embeddings that are already saved in the index and only embeds new or changed chunks, so adding a document is quick and cheap. The Gemini free tier limits embedding requests per minute and per day. The script paces itself and waits when it hits the per-minute limit.
+1. Download official documents from each scheme's government portal.
+2. Place them as `backend/data/raw/<scheme_id>/<file>.pdf` using ids `pm_kisan`, `pmay_g`, `ayushman_bharat`, `ujjwala`, `mgnrega`. Plain UTF-8 `.txt` files also work and count as page 1.
+3. Optionally record each file's official URL in `backend/data/sources.json` so citations link to the exact source.
+4. Run `python -m app.ingest` (only new or changed chunks are embedded), then commit `backend/data/index/`.
 
 Raw PDFs are git-ignored by default: check each document's redistribution terms before committing them.
 
 </details>
 
----
-
-## 📊 Evaluation
-
-`evaluation/dataset.csv` holds 43 answerable questions (direct, paraphrased, Hindi and Odia) and 7 out-of-scope questions.
-
-```bash
-python evaluation/evaluate.py --check   # offline: does each expected keyword exist in the indexed documents?
-python evaluation/evaluate.py           # Recall@K, MRR, per-type results, MIN_SCORE sweep
-```
-
-A retrieved chunk counts as relevant if it comes from the right scheme and contains one of the row's expected keywords. These numbers therefore measure retrieval with a keyword-based proxy for relevance, not human-judged answer quality. The script also prints a `MIN_SCORE` sweep showing how many answerable questions are kept and how many out-of-scope questions are refused at each threshold.
-
-| Metric | Result |
-| --- | --- |
-| Recall@5 | _to measure_ |
-| MRR | _to measure_ |
-| Out-of-scope questions refused | _to measure_ |
-| Answer faithfulness (manual review of N answers) | _to measure_ |
-| Citation accuracy (manual review) | _to measure_ |
-
----
-
-## ☁️ Deploy
-
 <details>
-<summary><b>Backend on Render</b></summary>
+<summary><b>Deploy (Render + Vercel)</b></summary>
 
-1. Push the repo to GitHub (make sure `backend/data/index/` is committed).
-2. Render → New → Blueprint → select the repo (uses `render.yaml`), or New Web Service → Docker, root directory `backend`.
-3. Set secrets in the Render dashboard: `GEMINI_API_KEY`, and `ALLOWED_ORIGINS` (your Vercel URL with `https://`, no trailing slash).
-4. Check `https://<your-service>.onrender.com/health` → `"index_loaded": true`.
+**Backend (Render):** New → Blueprint → select the repo (`render.yaml`). Set `GEMINI_API_KEY` and `ALLOWED_ORIGINS` (your Vercel URL with `https://`, no trailing slash). Check `/health` shows `"index_loaded": true`.
 
-Free instances sleep when idle, so the first request after a break is slow.
-
-</details>
-
-<details>
-<summary><b>Frontend on Vercel</b></summary>
-
-1. Vercel → Add New Project → import the repo, set **Root Directory** to `frontend`.
-2. Add env var `VITE_API_URL` = your Render URL.
-3. Deploy, then put the Vercel URL into the backend's `ALLOWED_ORIGINS` and redeploy the backend.
+**Frontend (Vercel):** import the repo with **Root Directory** `frontend` and set `VITE_API_URL` to the Render URL.
 
 The API key lives only in Render's secret settings, never in React or Git.
 
 </details>
 
----
-
-## 🔌 API
+<details>
+<summary><b>API reference</b></summary>
 
 | Endpoint | Purpose |
 | --- | --- |
@@ -196,6 +230,8 @@ The API key lives only in Render's secret settings, never in React or Git.
 | `POST /api/recommendations` | `{needs[], occupation?}` → suggested schemes with reasons |
 | `GET /health` | Service and index status |
 
-## ⚠️ Disclaimer
+</details>
 
-Answers are generated from the indexed documents and may not reflect the latest rules. This is not an official source or an eligibility decision. Confirm on the official scheme portal or at your local office.
+---
+
+*Answers are generated from the indexed documents and may not reflect the latest rules. This is not an official source or an eligibility decision. Confirm on the official scheme portal or at your local office.*

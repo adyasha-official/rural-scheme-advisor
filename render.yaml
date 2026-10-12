@@ -11,4 +11,4 @@ services:
       - key: ALLOWED_ORIGINS
         sync: false          # e.g. https://your-app.vercel.app
       - key: MIN_SCORE
-        value: "0.5"
+        value: "0.6"

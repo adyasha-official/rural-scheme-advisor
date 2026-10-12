@@ -26,7 +26,7 @@ CHUNK_OVERLAP_WORDS = int(os.getenv("CHUNK_OVERLAP_WORDS", "40"))
 TOP_K = int(os.getenv("TOP_K", "5"))
 # Minimum cosine similarity for a chunk to count as relevant.
 # Tune this with evaluation/evaluate.py on your own documents.
-MIN_SCORE = float(os.getenv("MIN_SCORE", "0.5"))
+MIN_SCORE = float(os.getenv("MIN_SCORE", "0.6"))
 
 MAX_QUESTION_CHARS = 500
 MAX_HISTORY_TURNS = 4
